@@ -1,0 +1,17 @@
+
+여러 개의 input 을 효율적으로 다루려면, name 속성을 활용하면 좋다.
+그러면, 하나의 이벤트 핸들러로 여러개의 Input DOM 을 효율적으로 컨트롤 할 수 있다.
+
+    handleChange = (e) => {
+        this.setState({
+            [e.target.name]: e.target.value
+        });
+    }
+
+    handleClick = (e) => {
+        alert(this.state.username + " : " + this.state.message);
+        this.setState({
+            username: '',
+            message: ''
+        });
+    }
