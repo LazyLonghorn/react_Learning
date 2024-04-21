@@ -1,0 +1,185 @@
+컴포넌트(Component) 는 기본적으로 2 가지 유형으로 나뉜다.
+
+ # 클래스형 컴포넌트
+   - state, 라이프 사이클, 임의 메서드 정의 가능
+   - render 함수 필수
+
+ # 함수형 컴포넌트
+   - Hooks ( v.16.8 부터 도입되면서, state, 라이프사이클 등에 대한 기능을 유사하게 지원 )
+   - React 에서 권장하고 있는 방안
+
+
+
+
+■ props
+
+ 컴포넌트의 속성을 의미.
+ 부모 컴포넌트에서 설정 가능하다.
+ 해당 컴포넌트를 호출하는 부분에서 props 이름으로 속성을 설정하면, 컴포넌트의 파라미터에 객체 형태로 값이 전달된다.
+
+ defaultProps 를 통해 기본값을 설정가능하다.
+ 기본 속성으로는 children 이 있는데, 해당 컴포넌트의 하위 요소를 보여준다.
+
+[App.js]
+import MyComponent from "./MyComponent";
+
+const App = () => {
+  return (
+    <MyComponent name={'React'}>
+      Hello React
+    </MyComponent>
+  );
+}
+
+export default App;
+
+[MyComponent.js]
+import React from 'react';
+
+const MyComponent = (props) => {
+    return (
+        <div>
+            Component Name [ {props.name} ] <br/>
+            Component Children [ {props.children} ]
+        </div>
+    );
+};
+
+MyComponent.defaultProps = {
+    name: 'React'
+}
+
+export default MyComponent;
+
+
+ 비구조화 문법을 활용하면 보다, 소스를 간략하게 구성할 수 있다.
+ const {name, children} = props; 
+ const MyComponent = ({ name, children }) => {}
+
+
+ propTypes 를 통해 props 의 Type 및 필수 요소(isRequired) 을 지정할 수 있다.
+ ※ 최신 버전 기준으로 기본으로 적용되지 않고 있다. ( 공식 사이트에서는 typescript 사용이나, 다른 라이브러리를 권장하고 있다. )
+    동작은 문제 없어 보이지만, Warning 발생
+
+https://ko.legacy.reactjs.org/docs/typechecking-with-proptypes.html
+https://legacy.reactjs.org/warnings/dont-call-proptypes.html
+https://www.npmjs.com/package/prop-types
+
+
+ 클래스형 컴포넌트의 경우, this.props 에 props 정보가 전달된다.
+ defaultProps 와 propTypes 을 클래스 내에 정의 가능하다.
+
+class MyComponent extends Component {
+    static defaultProps = {
+        name: 'React'
+    }
+
+    static propTypes = {
+        name: PropTypes.string,
+        number: PropTypes.number.isRequired,
+    }
+
+    render() {
+        const { name, children, number } = this.props;
+        return (
+            <div>
+                Component Name [ {name} ] <br/>
+                Component Children [ {children} ] <br/>
+                Component number [ {number} ]
+            </div>
+        );
+    }
+}
+
+export default MyComponent;
+
+
+
+■ state
+
+ 컴포넌트 내부에서 변경될 수 있는 값을 의미한다.
+ 
+ 클래스형의 경우, this.state 를 사용한다.
+ setState() 함수를 통해 state 를 변경할 수 있다.
+ 
+ ※ 클래스형 컴포넌트에서 생성자를 임의로 생성하는 경우, 반드시 super(props) 를 호출해주어야 한다. ( Component Class )
+ 
+[ClassCounter.js]
+import React, { Component } from 'react';
+
+class ClassCounter extends Component {
+    state = {
+        number : 0
+    }
+
+    render() {
+        const { number } = this.state;
+        return (
+            <div>
+                <h1>{number}</h1>
+                <button onClick={() => {
+                    this.setState({ number : number + 1 });
+                }}>+ 1</button>
+            </div>
+        );
+    }
+}
+
+export default ClassCounter;
+
+
+ setState() 는 비동기 방식으로 2 번 연속해서 setState 를 호출해도 "2" 가 되지 않는다.
+<button onClick={() => {
+    this.setState({ number : number + 1 });
+    this.setState({ number : number + 1 });
+}}>+ 1</button>
+
+
+ 이런 경우, setState 에 함수를 매핑하고 반환 값으로 Update 할 state 객체를 전달하면 된다.
+ setState() 의 두 번째 파라미터로 함수를 넣으면, setState 작업이 마무리 된 후, 해당 함수를 호출한다.
+
+
+<button onClick={() => {
+    this.setState( (prevState, props) => ({
+        number: prevState.number + 1
+    }) );
+    this.setState( (prevState, props) => ({
+        number: prevState.number + 1
+    }) );
+}}>+ 1</button>
+
+this.setState( (prevState, props) => ({
+    number: prevState.number + 1
+}), () => { console.log("Number Update End"); } );
+
+
+ 함수형의 경우, useState 를 사용한다.
+
+[Say.js]
+import React, { useState } from 'react';
+
+const Say = () => {
+    const [message, setMessage] = useState('');
+    const onClickEnter = () => setMessage('Enter!');
+    const onClickLeave = () => setMessage('Leave!');
+    return (
+        <div>
+            <button onClick={onClickEnter}>Enter</button>
+            <button onClick={onClickLeave}>Leave</button>
+            <h1>{message}</h1>
+        </div>
+    );
+};
+
+export default Say;
+
+
+
+state 를 사용할 때, 주의할 점은 반드시 setState, useState 에서 제공하는 setter 를 통해서 변경해야한다. ( 그래야 React 에서 변경점을 체크가 가능하다. )
+배열이나 객체 유형의 경우, ... 를 통한 복사한 객체를 다시 설정해주어야 한다.
+( 새로운 객체가 반환되어야 한다. -> ..., concat(), filter(), map() 등 )
+
+
+
+
+
