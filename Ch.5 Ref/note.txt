@@ -1,0 +1,93 @@
+
+ref 는 DOM 에 id 를 다는 것 처럼 이름을 다는 기능이다.
+
+일반적으로 id 를 사용할 수도 있지만, unique 하지 못할 수 있어 컴포넌트 간에 id 가 충돌할 수도 있는 문제가 발생할 수 있다.
+ref 는 전역적으로 동작하지 않고, 컴포넌트 내부에서만 동작해 해당 문제가 발생하지 않는다.
+
+
+ref 를 사용하는 경우는 "DOM 을 직접 다룰 때" 이다.
+  # DOM 에 focus
+  # 스크롤 박스 조정
+  # canvas 요소에 Drawing
+
+
+
+ref 를 생성하는 방법은 2 가지가 있다.
+
+■ 콜백함수를 통한 설정
+
+  해당 DOM 에 ref prop 에 콜백함수를 전달하고, 함수 내에서 ref 를 컴포넌트의 멤버변수로 전달 받는 것이다.
+  이렇게 전달받은 변수는 해당 DOM 객체를 가리키게 된다.
+
+■ React.createRef
+
+  React.createRef 함수를 통해 생성하는 방법이다.
+  
+  input = React.createRef()
+  <input ref={this.input}/>
+
+  위와 같이 ref prop 에 콜백이 아닌, React.createRef 로 생성한 멤버 변수를 설정하면 된다.
+
+
+[ValidationSample.js]
+
+import React, { Component } from 'react';
+import './ValidationSample.css'
+
+class ValidationSample extends Component {
+    state = {
+        password: '',
+        clicked: false,
+        validated: false
+    }
+
+    handleChange = (e) => {
+        this.setState({
+            password: e.target.value
+        })
+    }
+
+    handleClick = () => {
+        this.setState({
+            clicked: true,
+            validated: this.state.password === '0000'
+        })
+
+        this.input.focus();
+    }
+
+    render() {
+        return (
+            <div>
+                <input 
+                    type='password' 
+                    className={this.state.clicked ? (this.state.validated ? 'success' : 'failure') : ''}
+                    value={this.state.password}
+                    onChange={this.handleChange}
+                    ref={(ref) => this.input = ref}
+                /> 
+                <button onClick={this.handleClick}>Validated</button>
+            </div>
+        );
+    }
+}
+
+export default ValidationSample;
+
+
+
+
+ref 를 DOM 이 아닌, 컴포넌트로 직접 설정할 수도 있다.
+컴포넌트로 설정하면, 해당 컴포넌트의 멤버변수 등에도 접근이 가능하다.
+<Component ref={ (ref) => {this.component = ref} }
+
+
+※ 함수형 컴포넌트에서는 useRef 라는 Hooks 를 통해서 ref 를 설정해야 한다.
+
+
+※ 클래스형 컴포넌트 & 함수형 컴포넌트 ref 생성 차이
+
+https://velog.io/@hoon_dev/React-Ref-%EC%9D%B4%EC%9A%A9%ED%95%98%EA%B8%B0feat-createRef
+
+ref={(ref) => {this.scrollBox = ref}} 구조는 클래스형 에서만 사용가능
+
