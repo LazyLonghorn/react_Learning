@@ -1,0 +1,367 @@
+
+
+1. useState
+
+const [value, setValue] = useState(0)
+
+
+2. useEffect
+
+컴포넌트가 렌더링 될 때마다, 특정 동작을 발생시키는 Hooks
+componentDidMount + componentDidUpdate 가 합쳐진 형태
+
+
+useEffect(() => {
+    console.log('Render!');
+    console.log({ name, nick });
+})
+
+
+// Only Mount
+useEffect(() => {
+    console.log("Mounted");
+}, [])
+
+
+// 특정 값 변경 시
+useEffect(() => {
+    console.log("Name : " + name);
+}, [name])
+
+
+// cleanup Function (마무리 동작)
+useEffect 는 기본적으로 렌더링된 직후 실행된다.
+cleanup 함수의 경우, 언마운트나 업데이트 직전에 호출된다. 
+
+useEffect(() => {
+    console.log("Mount or Update");
+    console.log("U Name : " + name);
+    return () => { 
+        console.log('Clean up'); 
+        console.log("Clean Name : " + name);
+    };
+}, [name])
+
+
+위의 예시를 확인해보면, 처음 렌더링 될때, Name(U) 의 값을 표현하고
+name 을 변경하면, Name(C : 이전 값) 을 표현하고 다시 Name(U : 신규 입력된 값) 으로 표시된다.
+해당 컴포넌트가 Unmount 되면, C 만 출력된다.
+
+Unmount 혹은 Update 직전에 cleanup 함수가 호출되고, 이후에 Update 과정에서 useEffect 에 설정된 함수가 호출됨
+(Button 예제로 확인하면 명확하다)
+
+만약 Unmount 의 경우만 Clean 하고 싶다면, 아래와 같이 두 번째 파라미터를 빈 배열로 설정
+
+useEffect(() => {
+    console.log("Mounted");
+    return () => { 
+        console.log("Unmounted"); 
+    }
+}, [])
+
+
+[Info.js]
+import React, {useState, useEffect} from 'react';
+
+const Info = () => {
+    const [name, setName] = useState('');
+    const [nickname, setNickname] = useState('');
+
+    useEffect(() => {
+        console.log("Mount or Update");
+        console.log("U Name : " + name);
+        return () => { 
+            console.log('Clean up'); 
+            console.log("Clean Name : " + name);
+        };
+    }, [name]);
+
+    const onChangeName = (e) => setName(e.target.value);
+    const onChangeNickname = (e) => setNickname(e.target.value);
+
+    return (
+        <>
+            <div>
+                <input value={name} onChange={onChangeName}/>
+                <input value={nickname} onChange={onChangeNickname}/>
+            </div>
+            <div>
+                <div>
+                    <b>Name: </b> {name}
+                </div>
+                <div>
+                    <b>NickName: </b> {nickname}
+                </div>
+            </div>
+        </>
+    );
+};
+
+export default Info;
+
+[App.js]
+import React, {useState} from 'react';
+import Counter from './Counter';
+import Info from './Info';
+
+const App = () => {
+    const [visible, setVisible] = useState(false);
+    return (
+        <>
+            {/* <Counter/> */}
+            <button onClick={() => setVisible(!visible)}>{visible ? 'Hide' : 'Show'}</button>
+            <hr/>
+            {visible && <Info/>}
+        </>
+    );
+};
+
+export default App;
+
+
+3. useReducer
+
+useState 보다 다양한 상황에 state 를 변경할 수 있도록 지원하는 Hooks
+reducer 는 현재 상태, 업데이트를 위한 액션 값을 전달 받아 상태를 변경
+이 때, 새로운 상태는 불변성을 지켜야 한다.
+
+function reducer(state, action) {  
+   return { .... } 	// 불변성을 지키면서 업데이트를 한 새로운(이게 중요) 상태를 반환
+}
+
+{ type : 'INCREMENT' }		// Action
+
+
+[Counter.js]
+import React, {useReducer} from 'react';
+
+function reducer(state, action) {
+    switch(action.type) {
+        case 'INCREMENT': 
+            return { value : state.value + 1 };
+        case 'DECREMENT': 
+            return { value : state.value - 1 };
+        default:
+            return state;
+    }
+}
+
+const Counter = () => {
+    const [ state, dispatch ] = useReducer(reducer, {value: 0});
+
+    return (
+        <div>
+            <p>Count : {state.value}</p>
+            <button onClick={() => { dispatch({type: 'INCREMENT'}) }}>+ 1</button>
+            <button onClick={() => { dispatch({type: 'DECREMENT'}) }}>- 1</button>
+        </div>
+    );
+};
+
+export default Counter;
+
+
+useReducer 는 reducer 함수와 기본값을 파라미터로 넣는다.
+반환하는 것은 state, dispatch 함수이다.  ( dispatch 는 액션을 실행하는 함수이다. )
+dispatch 를 통해 액션에 따른 기능을 구현할 수 있다.
+
+
+useReducer 에서 장점 중 하나가 업데이트 로직을 컴포넌트 밖으로 정의 할 수 있다는 점이다.
+
+
+[Info.js]
+import React, { useReducer, useEffect, useState } from 'react';
+
+function reducer(state, action) {
+    return {
+        ...state,
+        [action.name]: action.value
+    }
+}
+
+const Info = () => {
+    const [state, dispatch] = useReducer(reducer, {
+        name: '',
+        nick: ''
+    });
+
+    const {name, nick} = state;
+    const onChange = (e) => {
+        dispatch(e.target);
+    }
+
+    return (
+        <div>
+            <div>
+                <input name='name' value={name} onChange={onChange} />
+                <input name='nick' value={nick} onChange={onChange} />
+            </div>
+            <div>
+                <div>
+                    <b>Name : </b> {name}
+                </div>
+                <div>
+                    <b>Nick : </b> {nick}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Info;
+
+
+
+4. useMemo
+
+컴포넌트 내부에서 발생하는 연산을 최적화 하는 Hooks
+
+
+[Average.js]
+import React, { useState } from 'react';
+
+const getAverage = (numbers) => {
+    console.log("Average!");
+    if(numbers.length === 0) {
+        return 0;
+    }
+
+    const sum = numbers.reduce((a, b) => a + b);
+    return sum / numbers.length;    
+}
+
+const Average = () => {
+    const [list, setList] = useState([]);
+    const [number, setNumber] = useState('');
+
+    const onChange = e => {
+        setNumber(e.target.value);
+    }
+
+    const onInsert = e => {
+        const nextList = list.concat(parseInt(number));
+        setList(nextList);
+        setNumber('');
+    }
+
+    return (
+        <div>
+            <input value={number} onChange={onChange} />
+            <button onClick={onInsert}>Insert</button>
+            <ul>
+                {list.map((value, index) => 
+                    <li key={index}>{value}</li>
+                )}
+            </ul>
+            <div>
+                <b>Average : </b> {getAverage(list)}
+            </div>
+        </div>
+    );
+};
+
+export default Average;
+
+
+위 예시를 살펴보면, Input 에 값을 입력 시에도 getAverage 함수가 호출하고 렌더링 되는 것을 확인할 수 있다.
+이런 불필요한 과정을 없앨 수 있는 것이 useMemo 이다.
+
+
+const avg = useMemo(() => getAverage(list), [list]);
+
+위와 같이 작성하면, list 에 대한 변경이 있는 경우에만 해당 함수가 호출 및 렌더링 된다.
+
+
+
+5. useCallback
+
+useMemo 와 유사 / 주로 렌더링 성능을 최적화하는데 사용
+만들어 놨던 함수를 재사용할 수 있다.
+
+Average 의 경우, OnChange 등과 같은 함수는 리렌더링될 때, 새로운 만들어진 함수를 사용하게 된다.
+
+보통은 상관 없지만, 렌더링이 자주 발생하거나 갯수가 많아지면, 해당 부분을 최적화 해주는 것이 좋다.
+
+
+const onChange = useCallback(e => {
+    setNumber(e.target.value);
+}, []);
+
+const onInsert = useCallback(e => {
+    const nextList = list.concat(parseInt(number));
+    setList(nextList);
+    setNumber('');
+}, [number, list]);
+
+
+보통의 값 설정만 하는 경우는 상관없지만, 특정 상태 값에 대해 의존하면서 동작하는 경우, 2 번째와 같이 의존하는 값을 명시해주어야 한다. ( list, number 를 통해서 값을 조회하고 있음 )
+
+
+6. useRef
+
+앞서 ref 의 경우, 클래스형 컴포넌트에서만 가능했다.
+하지만, useRef 를 사용하면 유사한 기능을 함수형 컴포넌트에서도 구현이 가능하다.
+
+const Average = () => {
+    const [list, setList] = useState([]);
+    const [number, setNumber] = useState('');
+    const inputEl = useRef(null);
+
+    const onChange = useCallback(e => {
+        setNumber(e.target.value);
+    }, []);
+
+    const onInsert = useCallback(e => {
+        const nextList = list.concat(parseInt(number));
+        setList(nextList);
+        setNumber('');
+        inputEl.current.focus();
+    }, [number, list]);
+
+    ( ... ) 
+
+   <input value={number} onChange={onChange} ref={inputEl} />
+    ( ... ) 
+}
+
+
+위와 같이 설정하면, ref 로 설정한 객체의 current 가 해당 Element 를 의미한다.
+
+
+7. Custom Hooks
+
+아래 예시는 위의 Info 에서 사용하는 reducer 를 별도의 Hooks 으로 정의할 수 있다.
+
+[useInputs.js]
+import { useReducer } from 'react';
+
+function reducer(state, action) {
+    return {
+        ...state,
+        [action.name]: action.value
+    }
+}
+
+export default function useInputs(initForm) {
+    const [state, dispatch] = useReducer(reducer, initForm);
+    const onChange = e => {
+        dispatch(e.target);
+    }
+
+    return [state, onChange];
+}; 
+
+[Info.js]
+import React from 'react';
+import useInputs from './useInputs';
+
+const Info = () => {
+    const [state, onChange] = useInputs({
+        name: '',
+        nick: ''
+    });
+
+    const { name, nick } = state;
+   
+    (...)
+}
