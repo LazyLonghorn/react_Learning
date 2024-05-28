@@ -1,0 +1,39 @@
+[일정 관리 웹 애플리케이션 만들기]
+
+node-sass, classnames, react-icons 라이브러리 설치
+
+
+.prettierrc 파일 설정
+
+[.prettierrc]
+{
+    "singleQuote": true,
+    "semi": true,
+    "useTabs": false,
+    "trailingComma": "all",
+    "printWidth": 80
+}
+
+※ Prettier, jsconfig.json 관련 정리 필요
+
+※ React-icons
+https://react-icons.github.io/react-icons/
+
+
+
+// Element 사이에 테두리 설정
+& + & {
+    border-top: 1px solid #DEE2E6;
+}
+
+
+TodoListItem 의 [classnames] 를 활용해서 CheckBox checked 를 설정하고 있다.
+ = cn('checkbox', {checked}) 
+
+
+
+※ useCallback 참고 (아주 유용함)
+https://www.daleseo.com/react-hooks-use-callback/
+
+
+
