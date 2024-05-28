@@ -1,26 +1,43 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useReducer} from 'react';
+import useInput from './useInput';
+
+function reducer(state, action) {
+    return {
+        ...state,
+        [action.name]: action.value
+    }
+}
 
 const Info = () => {
-    const [name, setName] = useState('');
-    const [nickname, setNickname] = useState('');
+    const [state, onChange] = useInput({name: '', nickname: ''});
+    const {name, nickname} = state;
+    // const [state, dispatch] = useReducer(reducer, {name: '', nickname: ''});
+    // const {name, nickname} = state;
 
-    useEffect(() => {
-        console.log("Mount or Update");
-        console.log("U Name : " + name);
-        return () => { 
-            console.log('Clean up'); 
-            console.log("Clean Name : " + name);
-        };
-    }, [name]);
+    // const onChange = (e) => {
+    //     dispatch(e.target);
+    // }
 
-    const onChangeName = (e) => setName(e.target.value);
-    const onChangeNickname = (e) => setNickname(e.target.value);
+    // const [name, setName] = useState('');
+    // const [nickname, setNickname] = useState('');
+
+    // useEffect(() => {
+    //     console.log("Mount or Update");
+    //     console.log("U Name : " + name);
+    //     return () => { 
+    //         console.log('Clean up'); 
+    //         console.log("Clean Name : " + name);
+    //     };
+    // }, [name]);
+
+    // const onChangeName = (e) => setName(e.target.value);
+    // const onChangeNickname = (e) => setNickname(e.target.value);
 
     return (
         <>
             <div>
-                <input value={name} onChange={onChangeName}/>
-                <input value={nickname} onChange={onChangeNickname}/>
+                <input name="name" value={name} onChange={onChange}/>
+                <input name="nickname" value={nickname} onChange={onChange}/>
             </div>
             <div>
                 <div>
