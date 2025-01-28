@@ -31,7 +31,7 @@ interface Props {
 function Heading({text = 'Hello, world!'}: Props) {
   return <h1>{text}</h1>;
 }
-
+ 
 
 [App.js]
 import MyComponent from "./MyComponent";
