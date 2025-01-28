@@ -1,0 +1,54 @@
+※ Typescript + React 방법
+yarn create react-app {프로젝트명} --template typescript
+(https://velog.io/@growgrow_up/yarn%EC%9C%BC%EB%A1%9C-react-typescript%EC%84%A4%EC%B9%98%EB%B6%80%ED%84%B0-git-%EC%97%B0%EA%B2%B0-%EA%B9%8C%EC%A7%80)
+
+
+
+여러 개의 input 을 효율적으로 다루려면, name 속성을 활용하면 좋다.
+그러면, 하나의 이벤트 핸들러로 여러개의 Input DOM 을 효율적으로 컨트롤 할 수 있다.
+
+import React, { useState } from 'react';
+
+const EventPractice = () => {
+    type Form = {username: string, message: string}
+    const [form, setForm] = useState<Form>({username :'', message: ''});
+    const {username, message} = form;
+    const onChange = (e: any) => {
+        const nextForm = {
+            ...form,
+            [e.target.name]: e.target.value
+        }
+        setForm(nextForm);
+    }
+    const onClick = (e: any) => {
+        alert(`[${username}]: ${message}`);
+        const initForm = {
+            username: '',
+            message: ''
+        }
+
+        setForm(initForm);
+    }
+    
+    return (
+        <div>
+            <input
+                type="text"
+                name='username'
+                placeholder='Username'
+                value={username}
+                onChange={onChange}
+            />
+            <input
+                type="text"
+                name='message'
+                placeholder='Message'
+                value={message}
+                onChange={onChange}
+            />
+            <button onClick={onClick}>Submit</button>
+        </div>
+    );
+};
+
+export default EventPractice;
