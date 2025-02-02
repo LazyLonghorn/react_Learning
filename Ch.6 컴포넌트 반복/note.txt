@@ -1,0 +1,75 @@
+컴포넌트를 반복하는 경우에는 map 함수를 사용한다.
+map 는 새로운 배열 요소를 반환하기 때문에 변화 감지에 효과적이다.
+
+map 을 통해 반복을 하다보면, key 관련된 'Warning' 을 발견할 수 있다. (DOM 의 id 를 사용하는 경우)
+key 는 React 에서 컴포넌트 배열에 대한 변화 감지를 효율적으로 하기 위한 수단이다.
+key 가 없으면 순차적으로 변화감지를 하지만, key 가 있는 경우 해당 key 를 이용해서 변화 감지를 수행한다.
+key 값도 고유 값 형태로 설정하는 것 좋다.
+
+
+[IterationSample.tsx]
+
+import { useRef, useState } from 'react';
+type Article = {
+    id: number,
+    text: string
+}
+const IterationSample = () => {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const [articles, setArticles] = useState<Article[]>([
+        {id: 1, text: 'A'},
+        {id: 2, text: 'B'},
+        {id: 3, text: 'C'},
+        {id: 4, text: 'D'}
+    ]);
+
+    const [inputText, setInputText] = useState<string>('');
+    const [nextId, setNextId] = useState<number>(5);
+
+    const onChange = (e: any) => {
+        setInputText(e.target.value);
+    }
+    const onClick = (e: any) => {
+        let newArticles = articles.concat({
+            id: nextId,
+            text: inputText
+        });
+
+        if(inputRef.current) {
+            inputRef.current.focus();
+        }
+        
+        setInputText('');
+        setNextId(nextId + 1);
+        setArticles(newArticles);
+    }
+    const onRemove = (id: number) => {
+        let newArticles = articles.filter((article: Article) => (id !== article.id));
+        setArticles(newArticles);
+    }
+
+    const articleList = articles.map(article => 
+        <li 
+            key={article.id}
+            onDoubleClick={() => {onRemove(article.id)}}
+        >
+            {article.text}
+        </li>
+    );
+    
+    return (
+        <>
+            <input
+                type='text'
+                ref={inputRef}
+                value={inputText}
+                onChange={onChange}
+            />
+            <button onClick={onClick}>Add</button>
+            <ul>{articleList}</ul>
+        </>
+    );
+};
+
+export default IterationSample;
