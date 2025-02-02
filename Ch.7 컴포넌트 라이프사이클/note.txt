@@ -1,0 +1,210 @@
+컴포넌트의 라이프 사이클은 3 가지로 분류된다.
+
+  # Mount
+  # Update
+  # UnMount
+
+※ 책에서는 클래스형 컴포넌트를 기준으로 설명하고 있음
+
+
+1) Mount
+
+  DOM 이 생성되고 브라우저 상에 rendering 되는 과정을 의미한다.
+
+  (1) 함수형 컴포넌트 내부
+    함수형 컴포넌트의 경우, 시작점이 컴포넌트 내부이다. (constructor 와 동일한 역할)
+    동일하게 State를 정의하거나 사용될 함수들에 대해서 미리 정의를 하는 공간
+    단, constructor 와 다르게 함수가 Update 되는 과정에서도 동작이 수행됨.
+
+  (2) return
+    미리 구현된 HTML을 화면상에 그려지는 과정(렌더링)을 수행하는 함수를 의미 (render 와 동일한 역할)
+    해당 메서드 안에서는 부모 컴포넌트로 전달받은 props 와 컴포넌트 내에서 정의한 state 에 대한 접근이 가능
+
+  (3) useEffect
+    브라우저가 rendering 된 후에 동작을 수행 (componentDidMount 와 동일)
+    ※ useEffect()는 한개 또는 여러개 선언이 가능
+
+    useEffect(func, deps?)
+
+    Mounting 의 경우, deps 를 빈 배열로 넣어서 제어할 수 있다.
+    deps 를 빈 배열인 경우, 컴포넌트 초기 렌더링 시에만 해당 Function 이 수행됨.
+    ex. useEffect(()=>{}, [])
+
+    (값이 없는 경우, 리렌더링 시에 동작함)
+
+
+  # 클래스형 호출 순서
+    constructor
+    getDerivedStateFromProps : props 값을 state 에 넣을 때 사용
+    render
+    componentDidMount : 브라우저에 rendering 된 후
+
+
+2) Update
+
+  컴포넌트를 리렌더링 하는 동작을 의미한다.
+
+  Update 되는 경우는 4가지  
+   - props 변경
+   - state 변경
+   - 부모가 리렌더링 될때
+   - this.forceUpdate 호출
+
+  함수형 컴포넌트의 경우, useEffect 를 통해 제어함.
+  부모 컴포넌트로부터 전달받은 props 값의 변화가 발생하거나 부모 컴포넌트가 리 렌더링이 발생을 하는 경우 수행됨.
+  해당 컴포넌트 내에서 state의 값이 변하는 경우 수행됨.
+  
+  deps 배열에 있는 항목에 대한 변화가 감지되는 경우 해당 Function 이 수행됨.
+  ex. useEffect(()=>{}, [props.number])
+
+
+  # 클래스형 호출 순서
+    getDerivedStateFromProps : props 값을 state 에 넣을 때 사용 ( Mount 에서도 진행 )
+    shouldComponentUpdate : 리렌더링 할 여부를 결정 ( true, false 반환 / false 의 경우, 아래 과정이 호출되지 않음 / this.forceUpdate 의 경우, 해당 과정이 진행되지 않음 )
+    render
+    getSnapshotBeforeUpdate : DOM 에 반영하기 전 호출 함수
+    componentDidUpdate : 컴포넌트 업데이트 후
+
+
+3) Unmount
+
+  컴포넌트를 소멸되기 전 동작을 의미한다.
+  함수형 컴포넌트의 경우, useEffect 를 통해 제어함.
+
+  useEffect(()⇒{ return { // }}, [값])
+
+
+  # 클래스형 호출 순서
+    componentWillUnMount : Component 가 사라지기 전 호출
+
+
+
+
+
+=========================================================================
+
+
+1) Mount
+
+  DOM 이 생성되고 브라우저 상에 rendering 되는 과정을 의미한다.
+  
+  # 호출 순서
+  constructor
+  getDerivedStateFromProps : props 값을 state 에 넣을 때 사용
+  render
+  componentDidMount : 브라우저에 rendering 된 후
+
+
+(1) redner
+DOM 의 정보를 가져오거나 state 변경을 주고자 한다면, componentDidMount 에서 진행해야 한다.
+
+(2) getDerivedStateFromProps
+prorps 값을 state 와 동기화 하기 위한 용도
+
+static getDerivedStateFromProps(nextProps, prevState) {
+    if(nextProps.value !== prevState.value) {
+        return { value : nextProps.value };
+    }
+    return null;	// state 변경 X
+}
+
+(3) componentDidMount 
+이벤트 등록, setTimeout, setInterval, 네트워크 요청 등과 같은 비동기 작업을 주로 처리
+
+
+2) Update
+
+  Update 되는 경우는 4가지
+  
+   # props 변경
+   # state 변경
+   # 부모가 리렌더링 될때
+   # this.forceUpdate 호출
+
+
+  # 호출 순서
+getDerivedStateFromProps : props 값을 state 에 넣을 때 사용 ( Mount 에서도 진행 )
+shouldComponentUpdate : 리렌더링 할 여부를 결정 ( true, false 반환 / false 의 경우, 아래 과정이 호출되지 않음 / this.forceUpdate 의 경우, 해당 과정이 진행되지 않음 )
+render
+getSnapshotBeforeUpdate : DOM 에 반영하기 전 호출 함수
+componentDidUpdate : 컴포넌트 업데이트 후
+
+
+
+(1) shouldComponentUpdate 
+
+현재 props, state 는 this 를 통해 접근 가능하고, 새로 생성될 값은 인자값으로 들어오는 nextProps, nextState 로 접근 가능
+
+
+(2) getSnapshotBeforeUpdate
+
+주로 실제 반영되기 전의 처리할 동작이나, componentDidUpdate 에서 업데이트 직전에 참고할 값(스크롤 좌표 등) 을 파라미터로 넘기는 역할을 한다.
+※ 세 번째 파라미터(snapshot) 로 전달 받을 수 있다. ( return 한 값이 전달됨 )
+
+getSnapshotBeforeUpdate(prevProps, prevState) {
+   return { scrollTop, scrollHeight }
+}
+
+(3) componentDidUpdate 
+
+componentDidUpdate(prevProps, prevState, snapshot)		// props, state 는 업데이트 이전 값이다.
+
+
+
+
+3) Unmount
+
+componentWillUnMount : Component 가 사라지기 전 호출
+
+
+
+
+※ componentDidCatch
+
+렌더링 도중 오류가 발생하면, Error 화면이 아닌, 오류 화면을 보여주기 위함
+
+
+
+
+
+[ErrorBoundary.js]
+import React, { Component } from 'react';
+
+class ErrorBoundary extends Component {
+    state = {
+        error: false
+    }
+    
+    componentDidCatch(error, info) {
+        this.setState({
+            error: true
+        });
+
+        console.log({ error, info })
+    }
+
+    render() {
+        if(this.state.error) {
+            return <div>Try Error!</div>
+        }
+
+        return this.props.children;
+    }
+}
+
+export default ErrorBoundary;
+
+
+[App.js]
+<ErrorBoundary>
+    <LifeCycleSample color={this.state.color}/>
+</ErrorBoundary>
+
+
+Error 발생 시, 화면이 깜빡이면서 변환된다.
+
+
+
+
+
+※ this.prop, this.state 구분 주의하자
