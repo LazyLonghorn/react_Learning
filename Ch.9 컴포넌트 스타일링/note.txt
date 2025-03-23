@@ -1,0 +1,187 @@
+1. CSS
+
+2. Sass
+
+CSS 전처리기 / sass, scss 확장자
+node-sass 로 Sass -> css 로 변환해주는 라이브러리
+
+sass 는 CSS 의 전처리기 이기 때문에 웹에서 단독으로 적용될 수 없다.
+따라서, Convert 가 필요한데 대표적으로 위에서 언급한 node-sass 라이브러리이다.
+
+yarn add node-sass
+
+https://heropy.blog/2018/01/31/sass/
+
+※ 설치하지 않고 실행하면 오류 발생
+
+
+Sass 에서 사용하는 일부 공통된 변수나 모듈을 utils 로 아래와 같이 뽑을 수 있다.
+
+
+[utils.scss]
+$red: #fa5252;
+$orange: #fd7e14;
+$yellow: #fcc419;
+$green: #40c057;
+$blue: #339af0;
+$indigo: #5c7cfa;
+$violet: #7950f2;
+
+@mixin square($size) {
+    $calculated: 32px * $size;
+    width: $calculated;
+    height: $calculated;
+}
+
+
+[SassComponent.scss]
+
+@import './styles/utils.scss';
+
+.SassComponent {
+    display: flex;
+    background: red;
+    
+    
+    .box {
+      background: red; // 일반 CSS 에선 .SassComponent .box 와 마찬가지
+      cursor: pointer;
+      transition: all 0.3s ease-in;
+      &.red {
+        // .red 클래스가 .box 와 함께 사용 됐을 때
+        background: $red;
+        @include square(1);
+      }
+      &.orange {
+        background: $orange;
+        @include square(2);
+      }
+      &.yellow {
+        background: $yellow;
+        @include square(3);
+      }
+      &.green {
+        background: $green;
+        @include square(4);
+      }
+      &.blue {
+        background: $blue;
+        @include square(5);
+      }
+      &.indigo {
+        background: $indigo;
+        @include square(6);
+      }
+      &.violet {
+        background: $violet;
+        @include square(7);
+      }
+      &:hover {
+        // .box 에 마우스 올렸을 때
+        background: black;
+      }
+    }
+}
+
+
+이런 구조는 폴더 구조가 복잡해지면, 경로상에 어려움을 가지고 올수 있다. ( ../../styles/utils/ )
+이런 어려움은 sass-loader 를 커스터마이징 해서 해결할 수 있다.
+
+create-react-app 의 세부 설정을 외부로 꺼내야 한다.
+yarn eject 명령어를 수행하면, config 폴더가 생성되고 안에 webpact.config.js 등의 설정 파일이 있다.
+
+
+
+이 후, 아래 부분을 찾아 아래와 같이 수정해 준다.
+해당 설정은, scss 파일 경로와 상관 없이 무조건 디렉터리 기준 절대 경로로 인식하게 해준다.
+{
+  test: sassRegex,
+  exclude: sassModuleRegex,
+  use: getStyleLoaders(
+    {
+      importLoaders: 3,
+      sourceMap: isEnvProduction
+        ? shouldUseSourceMap
+        : isEnvDevelopment,
+      modules: {
+        mode: 'icss',
+      },
+    },
+    'sass-loader'
+  ),
+  // Don't consider CSS imports dead code even if the
+  // containing package claims to have no side effects.
+  // Remove this when webpack adds a warning or an error for this.
+  // See https://github.com/webpack/webpack/issues/6571
+  sideEffects: true,
+},
+
+
+{
+  test: sassRegex,
+  exclude: sassModuleRegex,
+  use: getStyleLoaders(
+    {
+      importLoaders: 3,
+      sourceMap: isEnvProduction
+        ? shouldUseSourceMap
+        : isEnvDevelopment,
+      modules: {
+        mode: 'icss',
+      },
+    }).concat({
+      loader: require.resolve('sass-loader'),
+      options: {
+        sassOptions: {
+          includePaths: [paths.appSrc + '/styles']
+        },
+        sourceMap: isEnvProduction && shouldUseSourceMap
+      }
+    }),
+  // Don't consider CSS imports dead code even if the
+  // containing package claims to have no side effects.
+  // Remove this when webpack adds a warning or an error for this.
+  // See https://github.com/webpack/webpack/issues/6571
+  sideEffects: true,
+},
+
+
+이후, [@import 'utils.scss'] 로 고쳐도 정상 동작하는 것을 확인할 수 있다.
+만약, 이후 기본으로 'utils.scss' 를 포함하게 하려면, sourceMap 부분 아래 해당 옵션을 추가해주면 된다.
+
+...
+sourceMap: isEnvProduction && shouldUseSourceMap
+prependData: `import 'utils';`
+...
+
+
+
+[yarn eject error]
+
+$ react-scripts eject
+NOTE: Create React App 2+ supports TypeScript, Sass, CSS Modules and more without ejecting: https://reactjs.org/blog/2018/10/01/create-react-app-v2.html
+
+√ Are you sure you want to eject? This action is permanent. ... yes
+This git repository has untracked files or uncommitted changes:
+
+"Ch.9 \354\273\264\355\217\254\353\204\214\355\212\270 \354\212\244\355\203\200\354\235\274\353\247\201/"
+
+Remove untracked files, stash or commit any changes, and try again.
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+
+(https://pimpdevelop.tistory.com/7)
+
+
+
+
+react Error: Cannot find module 'babel-loader'
+(https://github.com/velopert/learning-react/issues/26)
+
+react node scripts/start.js Could not find a required file. Name: index.js
+(https://github.com/facebook/create-react-app/issues/13035)
+
+위 과정은 TypeScript 기반의 경우, 오류가 발생한다...
+
+
+
