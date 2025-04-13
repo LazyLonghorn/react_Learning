@@ -1,0 +1,54 @@
+[일정 관리 웹 애플리케이션 만들기]
+
+node-sass, classnames, react-icons 라이브러리 설치
+yarn add node-sass classnames react-icons
+
+책: yarn add node-sass@4.14.1 classnames react-icons
+(※ 책에서는 node-sass@4.14.1 로 하면 안됨)
+
+
+
+.prettierrc 파일 설정
+
+[.prettierrc]
+{
+    "singleQuote": true,
+    "semi": true,
+    "useTabs": false,
+    "trailingComma": "all",
+    "printWidth": 80
+}
+
+※ Prettier, jsconfig.json 관련 정리 필요
+
+※ React-icons
+https://react-icons.github.io/react-icons/
+
+
+
+※ Typescript react-icons Error
+
+ERROR in src/TodoInsert.tsx:9:18
+TS2786: 'MdAdd' cannot be used as a JSX component.
+
+
+Case 2
+
+Its return type 'ReactNode' is not a valid JSX element.
+Type 'undefined' is not assignable to type 'Element | null'. Error 
+
+위 오류가 발생하는 경우, 컴포넌트가 JSX.Element 혹은 ReactElement를 반환해야 하는데, undefined를 반환할 수 있는 경우가 있기 때문에 타입 오류가 나는 것
+
+여러가지 해결방법은 사용하다가 4.10.1(이전에 잘 된 버전) 으로 설치하니깐 잘됨....
+^4.10.x 이상 버전은 Typescript 를 지원하고 있다.
+
+
+
+
+React Developer Tools 는 책과 다르게 [React] 탭이 아닌 [Component] 탭에서 확인이 가능하다.
+ 
+
+
+
+
+
