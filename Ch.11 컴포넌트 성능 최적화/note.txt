@@ -1,0 +1,239 @@
+[컴포넌트 성능 최적화]
+
+useState(createFunc()) : 리렌더링 될 때마다 함수를 호출
+useState(createFunc): 최초 렌더링 시에만 호출
+
+※ 초기 렌더링을 위한 함수는 컴포넌트 밖으로 설정(Reducer 처럼)
+
+
+만약, Todo List 가 많은 경우, 동작하는데 성능이 느릴 수 있다.
+아래와 같은 이유로 인해 리렌더링이 발생할 수 있다.
+
+1. 자신이 전달 받은 props 가 변경될 때
+2. 자신의 state 가 변경될 때
+3. 부모가 리렌더링 될 때
+4. forceUpdate 가 실행될 때
+
+
+만약, 항목 1 의 Check가 되면 App 의 state 가 변경되고
+따라서 App 이 리렌더링이 발생하면서 하위 모든 컴포넌트가 리렌더링이 발생하게 된다.
+(해당 항목만 리렌더링이 발생하도록 개선할 필요가 있다.)
+
+
+
+클래스형 컴포넌트의 경우, 라이프사이클의 shouldComponentUpdate 를 사용하면 되지만,
+함수형에서는 라이프사이클을 지원하지 않기 때문에 React.memo 를 활용하자
+
+React.memo() 함수로 감싸주면 해당 컴포넌트 함수는 props 값이 변경되지 않는 한 리렌더링 되지 않는다.
+
+
+[TodoListItem.tsx]
+...
+export default React.memo(TodoListItem);
+
+
+
+
+또한, 현재 onRemove, onToggle 가 todos 변경될 때마다 함수가 새로 생성된다.
+(useCallback 에서 todos 에 의존시켰기 때문에)
+
+이를 방지하기 위한 방법으로는 2 가지가 있다.
+
+1. useState 의 함수형 업데이트 기능
+2. useReducer
+
+
+1. 함수형 업데이트
+
+useState 에 새로운 상태 값이 아닌, 상태 업데이트를 어떻게 수행할 지 정의하는 업데이트를 함수를 전달하는 방식이다.
+
+ex)
+const [number, setNumber] = useState(0);
+const onIncrease = useCallback(() => setNumber(prev => prev + 1), []);
+
+이 방법을 사용하면, useCallback 에 두 번째 파라미터로 종속된 항목을 넣지 않아도 된다.
+
+
+※ setState vs 함수형 업데이트
+const onClick = () => {
+    setValue(value+1)
+    setValue(value+1)
+    setValue(value+1)
+}
+
+결과 : 1
+setState 는 비동기적 특성 때문이다.
+리액트가 효율적으로 렌더링하기 위해 여러 개의 상태 값 변경 요청을 batch(일괄 처리) 처리하기 때문이다.
+
+이렇게 setState는 변경된 사항을 기억하지 않기 때문에 마지막 업데이트만 적용되어 다름 렌더링에 쓰이게 된다.
+
+
+const onClick = () => {
+    setValue(prev => prev+1)
+    setValue(prev => prev+1)
+    setValue(prev => prev+1)
+}
+
+결과: 3
+
+함수형 업데이트 방식을 사용하면, 동기적으로 작업을 수행
+이전 값을 가지고 온다.
+
+
+(https://velog.io/@tjdgus0528/React-Native-5x048oii)
+
+
+
+
+[useCallback 예시]
+import React, { useCallback, useEffect } from 'react';
+
+const CallbackTest = ({ count }: { count: number }) => {
+  const callback = useCallback(() => {
+    console.log('callback 실행됨');
+  }, []); // 빈 배열이므로 컴포넌트가 리렌더되더라도 재생성 안됨
+
+  useEffect(() => {
+    console.log('callback 함수 인스턴스:', callback);
+  }, [callback]);
+
+  return (
+    <div>
+      <p>count: {count}</p>
+      <button onClick={callback}>Call Callback</button>
+    </div>
+  );
+};
+
+export default CallbackTest;
+
+
+위 소스에서 버튼 등을 클릭해도 callback 이 변경되지 않기 때문에 
+console.log('callback 함수 인스턴스:', callback); 구문은 최초 렌더링 시에만 발생한다. (버튼 클릭 해도 안됨)
+단, number 를 바꾸는 기능이 추가되면, 의존 값이 들어가기 때문에 렌더링이 발생하게 된다.
+때문에 함수형 업데이트 등을 사용해야함.
+
+
+2. useReducer
+
+ex)
+const [todos, dispatch] = useReducer(todoReducer, undefined, createBulkTodos);
+dispatch({ type: 'REMOVE', id });
+
+
+useReducer 에서 원래는 두 번째 인자로 초기 값을 설정해야 하지만, undefined 로 설정하고 초기 설정 함수를 설정하면 최초 렌더링 시에만 동작
+(예시: const [state, dispatch] = useReducer(reducer, {value: 0});)
+
+
+
+
+리액트에서 컴포넌트의 상태를 업데이트할 때, 중요한 점은 불변성을 지키는 것이다.
+불변성을 지키는 것은 기존 객체에 수정하는 것이 아닌, 새로운 객체를 만들어서 사용하는 것이다.
+
+React.memo 를 사용하면, props 가 변경된 여부를 통해 컴포넌트를 호출(최적화) 하기 때문에 새로운 객체를 사용해야 변경여부를 인지할 수 있다.
+따라서, 얕은 복사를 주의해야 한다.
+
+ex)
+const array = [1,2,3];
+const array2 = array;
+const array3 = [...array];
+array2[0] = 100;
+array3[0] = 100;
+
+console.log(array === array2);      // true
+console.log(array === array3);      // false
+
+const object = {nubmer: 1};
+const object2 = object;
+object2.number = 2;
+const object3 = {...object, number: 3};
+
+console.log(object === object2);        // true
+console.log(object === object3);        // false
+
+
+
+const list = [{id: 1, value: 30}, {id: 2, value: 60}]
+const list2 = [...list];
+list2[0].id = 2;
+
+console.log(list[0] === list[2]);       // true
+
+list2[0] = {
+    ...list[0],
+    id: 3
+}
+console.log(list[0] === list[2]);       // false
+
+
+객체가 복잡해질 수록 더 불변성을 지키기 어려워진다.
+이를 위해 immer 라이브러리를 사용한다.
+
+
+
+
+
+
+
+
+
+react-virtualized 렌더링 최적화
+
+만약, 2,500 개가 초기 데이터로 가져오는 경우,
+초기 화면에 나타나는 것은 9 개이지만, 스크롤 전임에도 전체가 렌더링이 발생하게 되는 현상이 나타난다.
+
+
+react-virtualized 는 스크롤 되기 전에는 렌더링하지 않고, 크기만 차지하도록 하고 스크롤 동작을 통해 해당 위치에 오면 렌더링하는 방식이다.
+
+ # yarn add react-virtualized
+
+
+react-virtualized 에서 Rendering 되는 컴포넌트에 스타일을 넣지 않은 경우(state 값으로) 스크롤 내릴 때 버벅이는 현상발생
+
+
+
+책의 예시처럼하면, 9개가 렌더링 될거로 생각햇는데, 실제로는 19 개가 렌더링되는 현상 발생 (Math.ceil(513 / 57) ≈ 9)
+
+근데 스크롤 부드럽게 하기 위해 약간의 버퍼로 몇 개 더 렌더링됨.
+기본적으로 overscanRowCount가 10이기 때문에, 실제 렌더링되는 컴포넌트 수는: 19
+
+화면에 보이는 행 수 + overscanRowCount
+= 9 + 10 = 약 19개
+
+(https://xionwcfm.tistory.com/226)
+(https://mnxmnz.github.io/react/infinity-scroll-react-virtualized/)
+
+
+
+
+※ useCallback 내부 함수에서 인자값을 비구조화 할당으로 선언하는 방법(chatGpt)
+
+import React, { useCallback } from 'react';
+
+type User = {
+  id: number;
+  name: string;
+};
+
+const MyComponent = () => {
+  const handleUser = useCallback(({ id, name }: User) => {
+    console.log(`User ID: ${id}, Name: ${name}`);
+  }, []);
+
+  return (
+    <button onClick={() => handleUser({ id: 1, name: 'Alice' })}>
+      Call User
+    </button>
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
